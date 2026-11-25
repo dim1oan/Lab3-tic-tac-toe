@@ -1,14 +1,18 @@
 """Графическое приложение «Крестики-нолики» для двух игроков на Tkinter."""
 
 import tkinter as tk
+from tkinter import messagebox
 from typing import Optional
 
 # Палитра цветов интерфейса в светлой сдержанной теме
 BG_COLOR = "#F8FAFC"
 CARD_BG = "#FFFFFF"
+HOVER_BG = "#F1F5F9"
 BORDER_COLOR = "#CBD5E1"
 TEXT_PRIMARY = "#0F172A"
 TEXT_MUTED = "#475569"
+BTN_BG = "#E2E8F0"
+BTN_ACTIVE = "#CBD5E1"
 COLOR_X = "#2563EB"
 COLOR_O = "#DC2626"
 WIN_BG = "#DCFCE7"
@@ -94,7 +98,7 @@ class TicTacToeApp:
     """Главное окно и графический интерфейс игры «Крестики-нолики»."""
 
     def __init__(self, root: tk.Tk) -> None:
-        """Инициализирует окно, игровую модель и виджеты."""
+        """Инициализирует окно, меню, игровую модель и виджеты."""
         self.root = root
         self.root.title("Крестики-нолики — Лабораторная работа №3")
         self.root.geometry("460x560")
@@ -106,22 +110,80 @@ class TicTacToeApp:
         self.score_label: Optional[tk.Label] = None
         self.board_frame: Optional[tk.Frame] = None
 
+        self._create_menu()
         self._create_widgets()
+        self._bind_shortcuts()
         self._update_status_labels()
 
+    def _create_menu(self) -> None:
+        """Создает верхнее меню приложения («Игра» и «Справка»)."""
+        menu_bar = tk.Menu(self.root)
+
+        game_menu = tk.Menu(menu_bar, tearoff=0)
+        game_menu.add_command(
+            label="Новая игра",
+            accelerator="Ctrl+N",
+            command=self.new_game,
+        )
+        game_menu.add_separator()
+        game_menu.add_command(
+            label="Выход",
+            accelerator="Ctrl+Q",
+            command=self.exit_app,
+        )
+        menu_bar.add_cascade(label="Игра", menu=game_menu)
+
+        help_menu = tk.Menu(menu_bar, tearoff=0)
+        help_menu.add_command(
+            label="Об авторе",
+            accelerator="F1",
+            command=self.show_about,
+        )
+        menu_bar.add_cascade(label="Справка", menu=help_menu)
+
+        self.root.config(menu=menu_bar)
+
+    def _bind_shortcuts(self) -> None:
+        """Привязывает горячие клавиши к основным действиям меню."""
+        self.root.bind("<Control-n>", lambda _event: self.new_game())
+        self.root.bind("<Control-N>", lambda _event: self.new_game())
+        self.root.bind("<Control-q>", lambda _event: self.exit_app())
+        self.root.bind("<Control-Q>", lambda _event: self.exit_app())
+        self.root.bind("<F1>", lambda _event: self.show_about())
+
     def _create_widgets(self) -> None:
-        """Создает информационную панель и сетку игрового поля 3x3."""
+        """Создает верхнюю панель управления и сетку игрового поля."""
         header_frame = tk.Frame(self.root, bg=BG_COLOR)
         header_frame.pack(fill="x", padx=20, pady=(16, 8))
 
+        top_row = tk.Frame(header_frame, bg=BG_COLOR)
+        top_row.pack(fill="x")
+
         title_label = tk.Label(
-            header_frame,
+            top_row,
             text="Крестики-нолики",
             font=("Segoe UI", 18, "bold"),
             bg=BG_COLOR,
             fg=TEXT_PRIMARY,
         )
-        title_label.pack(anchor="w")
+        title_label.pack(side="left")
+
+        restart_btn = tk.Button(
+            top_row,
+            text="Новая игра",
+            font=("Segoe UI", 10, "bold"),
+            bg=BTN_BG,
+            fg=TEXT_PRIMARY,
+            activebackground=BTN_ACTIVE,
+            activeforeground=TEXT_PRIMARY,
+            relief="flat",
+            bd=0,
+            padx=14,
+            pady=6,
+            cursor="hand2",
+            command=self.new_game,
+        )
+        restart_btn.pack(side="right")
 
         self.status_label = tk.Label(
             header_frame,
@@ -130,7 +192,7 @@ class TicTacToeApp:
             bg=BG_COLOR,
             fg=COLOR_X,
         )
-        self.status_label.pack(anchor="w", pady=(6, 2))
+        self.status_label.pack(anchor="w", pady=(8, 2))
 
         self.score_label = tk.Label(
             header_frame,
@@ -178,13 +240,41 @@ class TicTacToeApp:
 
         symbol = self.game.board[row][col]
         color = COLOR_X if symbol == "X" else COLOR_O
-        self.buttons[row][col].configure(text=symbol, fg=color)
+        self.buttons[row][col].configure(text=symbol, fg=color, bg=CARD_BG)
 
         if self.game.winner:
             for r, c in self.game.winning_cells:
                 self.buttons[r][c].configure(bg=WIN_BG, fg=WIN_FG)
 
         self._update_status_labels()
+
+    def new_game(self) -> None:
+        """Перезапускает партию и очищает игровое поле."""
+        self.game.reset()
+        for row in range(3):
+            for col in range(3):
+                self.buttons[row][col].configure(
+                    text="",
+                    bg=CARD_BG,
+                    fg=TEXT_PRIMARY,
+                )
+        self._update_status_labels()
+
+    def show_about(self) -> None:
+        """Показывает окно со сведениями об авторе и работе."""
+        messagebox.showinfo(
+            "Об авторе",
+            "Игра «Крестики-нолики» для двух игроков\n"
+            "Лабораторная работа №3 «Приложения с графическим интерфейсом»\n\n"
+            "Автор: Ткачук Дмитрий Владимирович\n"
+            "Группа: ИДБ-25-15, 2 курс\n"
+            "ВУЗ: МГТУ «СТАНКИН»\n"
+            "GitHub: https://github.com/dim1oan",
+        )
+
+    def exit_app(self) -> None:
+        """Корректно закрывает главное окно приложения."""
+        self.root.destroy()
 
     def _update_status_labels(self) -> None:
         """Обновляет текст статуса хода и счетчика партий."""
