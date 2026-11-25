@@ -1,0 +1,18 @@
+# Байткод Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Виртуальные окружения
+.venv/
+venv/
+env/
+
+# Настройки IDE
+.idea/
+.vscode/
+*.swp
+
+# Временные файлы
+*.log
+~$*.docx
